@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tag-Syntax Konverter</title>
+<script>
+  // In a SharePoint iframe the embedding page already carries title/context,
+  // so hide this page's own header there; keep it when opened standalone.
+  if (window.self !== window.top) {
+    document.documentElement.classList.add('in-iframe');
+  }
+</script>
+<style>
+  * { box-sizing: border-box; }
+  ::selection { background: #cddbe6; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #f5f4f0;
+    color: #1c1c1a;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+  input, select, textarea, button { font-family: inherit; }
+  button { cursor: pointer; }
+  code {
+    background: #eae7de;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 13px;
+  }
+  @keyframes copyPulse {
+    0% { opacity: 0; transform: translateY(-2px); }
+    15% { opacity: 1; transform: translateY(0); }
+    85% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .page {
+    min-height: 100%;
+    padding: clamp(20px, 5vw, 40px) clamp(16px, 4vw, 24px) clamp(48px, 8vw, 80px);
+    overflow-x: hidden;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+
+  html.in-iframe #pageHeader { display: none; }
+  html.in-iframe .tabs { margin-top: 0; }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #5b6b63;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-size: 32px;
+    font-weight: 650;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .lede {
+    font-size: 15px;
+    line-height: 1.55;
+    color: #43473f;
+    max-width: 680px;
+    margin: 0;
+  }
+
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 28px 0 24px;
+    background: #e9e7e0;
+    padding: 4px;
+    border-radius: 10px;
+    width: fit-content;
+  }
+  .tab-btn {
+    border: none;
+    padding: 10px 20px;
+    border-radius: 7px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    background: transparent;
+    color: #6b6f63;
+  }
+  .tab-btn.active {
+    background: #ffffff;
+    color: #1c1c1a;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    align-items: start;
+  }
+
+  .card {
+    background: #ffffff;
+    border: 1px solid #e2e0d6;
+    border-radius: 12px;
+    padding: clamp(18px, 4vw, 28px);
+    min-width: 0;
+  }
+
+  .field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #43473f;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .sub-label {
+    font-size: 12px;
+    color: #6b6f63;
+    display: block;
+    margin-bottom: 5px;
+  }
+  .hint {
+    margin-top: 7px;
+    font-size: 12.5px;
+    color: #6b6f63;
+    line-height: 1.5;
+  }
+  .divider {
+    height: 1px;
+    background: #eeece3;
+    margin: 20px 0;
+  }
+
+  .text-input, .select-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 12px;
+    border-radius: 8px;
+    border: 1px solid #d9d6c9;
+    font-size: 14px;
+    background: #fbfaf7;
+    color: #1c1c1a;
+  }
+  .text-input.small {
+    padding: 9px 10px;
+    font-size: 13.5px;
+    border-radius: 7px;
+  }
+
+  .pill-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .pill-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid #d9d6c9;
+    background: #fbfaf7;
+    color: #43473f;
+  }
+  .pill-btn.active {
+    border-color: #1c2b24;
+    background: #1c2b24;
+    color: #ffffff;
+  }
+
+  .seg-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .seg-btn {
+    flex: 1;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid #d9d6c9;
+    background: #fbfaf7;
+    color: #43473f;
+  }
+  .seg-btn.active {
+    border-color: #1c2b24;
+    background: #1c2b24;
+    color: #ffffff;
+  }
+
+  .control-select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid #d9d6c9;
+    font-size: 13px;
+    background: #fbfaf7;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
+  .control-select option { padding: 5px 4px; }
+
+  .no-results {
+    font-size: 12.5px;
+    color: #9a5a2a;
+    margin-top: 6px;
+  }
+
+  .locator-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .locator-grid > div { min-width: 0; }
+
+  .collision-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .collision-row span { font-size: 13px; color: #6b6f63; }
+  .collision-input { width: 90px; }
+
+  .sidebar {
+    position: sticky;
+    top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    max-width: 480px;
+  }
+
+  .result-box {
+    background: #1c2b24;
+    border-radius: 12px;
+    padding: 22px;
+  }
+  .result-label {
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #9db3a6;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .result-value {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 16px;
+    color: #eef4ef;
+    word-break: break-all;
+    line-height: 1.5;
+    min-height: 48px;
+  }
+  .result-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .copy-btn {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    border: none;
+    background: #eef4ef;
+    color: #1c2b24;
+  }
+  .test-btn {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    border: 1px solid #3a4e43;
+    background: transparent;
+    color: #cfe0d6;
+  }
+
+  .notice-box {
+    background: #fdf1e8;
+    border: 1px solid #ecd3b8;
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .notice-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #9a5a2a;
+    margin-bottom: 6px;
+  }
+  .notice-line {
+    font-size: 12.5px;
+    color: #8a5127;
+    line-height: 1.5;
+    margin-bottom: 3px;
+  }
+
+  .info-box {
+    background: #eef1e9;
+    border: 1px solid #dbe0d3;
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .info-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #43473f;
+    margin-bottom: 5px;
+  }
+  .info-body {
+    font-size: 13px;
+    color: #43473f;
+    line-height: 1.5;
+  }
+
+  .loading-box {
+    background: #ffffff;
+    border: 1px solid #e2e0d6;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    color: #6b6f63;
+    font-size: 14px;
+  }
+
+  .example-row {
+    margin-top: 14px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .example-btn {
+    padding: 7px 11px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    border: 1px solid #d9d6c9;
+    background: #f5f4f0;
+    color: #43473f;
+  }
+
+  .error-box {
+    background: #fbeae8;
+    border: 1px solid #edc2bd;
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .error-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #a13a2e;
+    margin-bottom: 5px;
+  }
+  .error-body {
+    font-size: 13px;
+    color: #8f3b30;
+    line-height: 1.5;
+  }
+
+  .sentence-box {
+    background: #1c2b24;
+    border-radius: 12px;
+    padding: 22px;
+  }
+  .sentence-label {
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #9db3a6;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .sentence-body {
+    font-size: 16px;
+    color: #eef4ef;
+    line-height: 1.55;
+  }
+
+  .rows-box {
+    background: #ffffff;
+    border: 1px solid #e2e0d6;
+    border-radius: 12px;
+    padding: 8px 0;
+  }
+  .row-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 11px 20px;
+    border-bottom: 1px solid #f0efe8;
+  }
+  .row-item:last-child { border-bottom: none; }
+  .row-key {
+    font-size: 12.5px;
+    color: #8a8d81;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .row-val {
+    font-size: 13.5px;
+    color: #1c1c1a;
+    text-align: right;
+  }
+
+  details.cheatsheet { margin-top: 36px; }
+  details.cheatsheet summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #5b6b63;
+  }
+  .cheat-grid {
+    margin-top: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e0d6;
+    border-radius: 12px;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #43473f;
+  }
+  .cheat-grid .h { font-weight: 700; margin-bottom: 8px; color: #1c1c1a; }
+  .cheat-grid .h2 { font-weight: 700; margin: 14px 0 8px; color: #1c1c1a; }
+  .grammar-box {
+    margin-top: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e0d6;
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .grammar-title {
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #1c1c1a;
+    font-size: 13px;
+  }
+  .grammar-pre {
+    margin: 0;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: #2c3830;
+    background: #f7f6f2;
+    border: 1px solid #eeece3;
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .copy-toast {
+    animation: copyPulse 1.4s ease;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="wrap">
+
+    <div id="pageHeader" style="margin-bottom:0;">
+      <div class="eyebrow">Control-Mapping · Word-Textmarken</div>
+      <h1>Tag-Syntax Konverter</h1>
+      <p class="lede">Erzeugt und entschlüsselt Word-Textmarken nach der Syntax <code>&lt;Normkürzel&gt;_&lt;Normstelle&gt;[__&lt;Locator&gt;][_N&lt;n&gt;]</code>.</p>
+    </div>
+
+    <div class="tabs">
+      <button type="button" id="tabBuild" class="tab-btn active">Text → ID bauen</button>
+      <button type="button" id="tabDecode" class="tab-btn">ID → Text entschlüsseln</button>
+    </div>
+
+    <div id="buildPanel">
+      <div class="grid-2">
+
+        <div class="card">
+
+          <div style="margin-bottom:22px;">
+            <div class="field-label">Sonderfall</div>
+            <div class="pill-row">
+              <button type="button" class="pill-btn active" data-sonderfall="none">Standard</button>
+              <button type="button" class="pill-btn" data-sonderfall="todo">TODO_NEU</button>
+              <button type="button" class="pill-btn" data-sonderfall="wissen">INTERNES_WISSEN</button>
+            </div>
+            <div id="sonderfallHint" class="hint" style="display:none;"></div>
+          </div>
+
+          <div id="standardCaseSection">
+            <div class="divider"></div>
+
+            <div style="margin-bottom:20px;">
+              <label class="field-label" for="normSelect">Normkürzel</label>
+              <select id="normSelect" class="select-input"></select>
+              <div id="currentNormDesc" class="hint" style="display:none;"></div>
+            </div>
+
+            <div style="margin-bottom:20px;">
+              <label class="field-label">Normstelle</label>
+              <div class="seg-row">
+                <button type="button" id="segControlBtn" class="seg-btn active">Control</button>
+                <button type="button" id="segKapitelBtn" class="seg-btn">Kapitel (kein Control)</button>
+              </div>
+
+              <div id="segControlSection">
+                <div id="hasRegisterSection">
+                  <input type="text" id="controlSearch" class="text-input" placeholder="Suche nach ID oder Titel…" style="margin-bottom:8px;"/>
+                  <select id="controlSelect" class="control-select" size="8"></select>
+                  <div id="noControlResults" class="no-results" style="display:none;">Keine Treffer.</div>
+                </div>
+                <div id="noRegisterSection" style="display:none;">
+                  <input type="text" id="freeNormstelle" class="text-input" placeholder="z. B. SR3.3, PR-1, Art11.1"/>
+                  <div class="hint">Für dieses Normkürzel liegt kein Control-Register vor — Punkte/Bindestriche werden automatisch zu Unterstrichen.</div>
+                </div>
+              </div>
+
+              <div id="segKapitelSection" style="display:none;">
+                <input type="text" id="kapitelInput" class="text-input" placeholder="z. B. 5.3"/>
+                <div class="hint">Ergibt z. B. „K5_3“ für Kapitel 5.3 — genutzt, wenn kein formales Control existiert.</div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div style="margin-bottom:4px;">
+              <label class="field-label" style="margin-bottom:12px;">Locator (optional): Absatz · Satz · Buchstabe · Nummer</label>
+              <div class="locator-grid">
+                <div>
+                  <label class="sub-label">Absatz (P&lt;n&gt;)</label>
+                  <input type="text" inputmode="numeric" id="locP" class="text-input small" placeholder="2"/>
+                </div>
+                <div>
+                  <label class="sub-label">Satz (S&lt;n&gt;)</label>
+                  <input type="text" inputmode="numeric" id="locS" class="text-input small" placeholder="1"/>
+                </div>
+                <div>
+                  <label class="sub-label">Buchstabe (Lit&lt;x&gt;)</label>
+                  <input type="text" id="locLit" class="text-input small" placeholder="b"/>
+                </div>
+                <div>
+                  <label class="sub-label">Nummer (Nr&lt;n&gt;)</label>
+                  <input type="text" inputmode="numeric" id="locNr" class="text-input small" placeholder="3"/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div>
+            <label class="field-label">Namenskollision (optional)</label>
+            <div class="collision-row">
+              <span>Wievielte Vergabe dieses Namens?</span>
+              <input type="text" inputmode="numeric" id="collision" class="text-input small collision-input" placeholder="z. B. 2"/>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="sidebar">
+          <div class="result-box">
+            <div class="result-label">Generierte Textmarke</div>
+            <div class="result-value" id="generatedId">—</div>
+            <div class="result-actions">
+              <button type="button" class="copy-btn" id="copyBtn">ID kopieren</button>
+              <button type="button" class="test-btn" id="testInDecoderBtn">Im Decoder prüfen</button>
+            </div>
+          </div>
+
+          <div id="validationBox" class="notice-box" style="display:none;">
+            <div class="notice-title">Hinweise</div>
+            <div id="validationMessages"></div>
+          </div>
+
+          <div id="controlInfoBox" class="info-box" style="display:none;">
+            <div class="info-title" id="controlInfoDisplay"></div>
+            <div class="info-body" id="controlInfoTitle"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="decodePanel" style="display:none;">
+      <div class="grid-2">
+        <div class="card">
+          <label class="field-label" for="decodeInput" style="margin-bottom:10px;">Textmarken-Name eingeben</label>
+          <input type="text" id="decodeInput" class="text-input" style="padding:13px 14px; font-size:15px; font-family:ui-monospace,Menlo,Consolas,monospace;" placeholder="z. B. ISO62443_3_3_SR3_3__P2_S1" value="ISO62443_3_3_SR3_3__P2_S1"/>
+
+          <div class="example-row" id="exampleRow"></div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div id="decodeErrorBox" class="error-box" style="display:none;">
+            <div class="error-title">Konnte nicht entschlüsselt werden</div>
+            <div class="error-body" id="decodeErrorText"></div>
+          </div>
+
+          <div id="decodeSentenceBox" class="sentence-box" style="display:none;">
+            <div class="sentence-label">Klartext</div>
+            <div class="sentence-body" id="decodeSentenceText"></div>
+          </div>
+
+          <div id="decodeRowsBox" class="rows-box" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <details class="cheatsheet">
+      <summary>Syntax-Spickzettel</summary>
+      <div class="cheat-grid">
+        <div>
+          <div class="h">Normkürzel</div>
+          ISO62443_2_1, ISO62443_3_3, ISO62443_4_1, ISO62443_4_2, EN40000_1/_2/_3, CRA, EN50742
+          <div class="h2">Locator (Absatz → Satz → Buchstabe → Nummer)</div>
+          P&lt;n&gt; Absatz · S&lt;n&gt; Satz · Lit&lt;x&gt; Buchstabe · Nr&lt;n&gt; Nummer
+        </div>
+        <div>
+          <div class="h">Sonderfälle</div>
+          Kein Control passt, aber Klärung nötig: <code>TODO_NEU</code><br/>
+          Kein Normbezug, eigenes Wissen: <code>INTERNES_WISSEN</code><br/>
+          Namenskollision beim zweiten Vorkommen: <code>_N2</code>, <code>_N3</code>, …
+          <div class="h2">Regeln</div>
+          Nur Buchstaben, Ziffern, Unterstriche · muss mit Buchstabe beginnen · Word-Limit 40 Zeichen
+        </div>
+      </div>
+      <div class="grammar-box">
+        <div class="grammar-title">Formale Grammatik (EBNF)</div>
+        <pre class="grammar-pre">Textmarke     ::= Standardform | Sonderfall
+Standardform  ::= Normkuerzel "_" Normstelle [ "__" Locator ] [ Kollision ]
+Sonderfall    ::= ( "TODO_NEU" | "INTERNES_WISSEN" ) [ Kollision ]
+
+Normkuerzel   ::= "ISO62443_2_1" | "ISO62443_3_3" | "ISO62443_4_1" | "ISO62443_4_2"
+                | "EN40000_1" | "EN40000_2" | "EN40000_3" | "CRA" | "EN50742"
+
+Normstelle    ::= ControlId | Kapitel
+ControlId     ::= Buchstabe { Buchstabe | Ziffer | "_" }        (* Register-ID, z. B. SR3_3, CR1_1, SM_1 *)
+Kapitel       ::= "K" Ziffer { Ziffer | "_" Ziffer }             (* z. B. K5_3 für Kapitel 5.3 *)
+
+Locator       ::= [ Absatz ] [ "_" Satz ] [ "_" Buchstabenteil ] [ "_" Nummer ]   (* mind. 1 Teil, Reihenfolge fix *)
+Absatz        ::= "P" Ziffer+
+Satz          ::= "S" Ziffer+
+Buchstabenteil::= "Lit" Buchstabe+
+Nummer        ::= "Nr" Ziffer+
+
+Kollision     ::= "_N" Ziffer+           (* _N2, _N3, … bei mehrfacher Vergabe desselben Namens *)
+
+Buchstabe     ::= "A".."Z" | "a".."z"
+Ziffer        ::= "0".."9"
+
+(* Word-Textmarken-Regel: Gesamtname muss mit Buchstabe beginnen,
+   nur [A-Za-z0-9_], maximal 40 Zeichen. *)</pre>
+      </div>
+    </details>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------------------------------------------------------------------
+  // Data: control register (IEC 62443-3-3, -4-1, -4-2) and norm list.
+  // Extracted from LetsDrinkSomeTea/62443.md — embedded so this page has
+  // no external dependencies and can be hosted as a single static file.
+  // ---------------------------------------------------------------------
+  var REGISTER = {"ISO62443_3_3":[{"norm_id":"SR1_1","display":"SR 1.1","title":"Human user identification and authentication"},{"norm_id":"SR1_2","display":"SR 1.2","title":"Software process and device identification and authentication"},{"norm_id":"SR1_3","display":"SR 1.3","title":"Account management"},{"norm_id":"SR1_4","display":"SR 1.4","title":"Identifier management"},{"norm_id":"SR1_5","display":"SR 1.5","title":"Authenticator management"},{"norm_id":"SR1_6","display":"SR 1.6","title":"Wireless access management"},{"norm_id":"SR1_7","display":"SR 1.7","title":"Strength of password-based authentication"},{"norm_id":"SR1_8","display":"SR 1.8","title":"Public key infrastructure (PKI) certificates"},{"norm_id":"SR1_9","display":"SR 1.9","title":"Strength of public key authentication"},{"norm_id":"SR1_10","display":"SR 1.10","title":"Authenticator feedback"},{"norm_id":"SR1_11","display":"SR 1.11","title":"Unsuccessful login attempts"},{"norm_id":"SR1_12","display":"SR 1.12","title":"System use notification"},{"norm_id":"SR1_13","display":"SR 1.13","title":"Access via untrusted networks"},{"norm_id":"SR2_1","display":"SR 2.1","title":"Authorization enforcement"},{"norm_id":"SR2_2","display":"SR 2.2","title":"Wireless use control"},{"norm_id":"SR2_3","display":"SR 2.3","title":"Use control for portable and mobile devices"},{"norm_id":"SR2_4","display":"SR 2.4","title":"Mobile code"},{"norm_id":"SR2_5","display":"SR 2.5","title":"Session lock"},{"norm_id":"SR2_6","display":"SR 2.6","title":"Remote session termination"},{"norm_id":"SR2_7","display":"SR 2.7","title":"Concurrent session control"},{"norm_id":"SR2_8","display":"SR 2.8","title":"Auditable events"},{"norm_id":"SR2_9","display":"SR 2.9","title":"Audit storage capacity"},{"norm_id":"SR2_10","display":"SR 2.10","title":"Response to audit processing failures"},{"norm_id":"SR2_11","display":"SR 2.11","title":"Timestamps"},{"norm_id":"SR2_12","display":"SR 2.12","title":"Non-repudiation"},{"norm_id":"SR3_1","display":"SR 3.1","title":"Communication integrity"},{"norm_id":"SR3_2","display":"SR 3.2","title":"Malicious code protection"},{"norm_id":"SR3_3","display":"SR 3.3","title":"Security functionality verification"},{"norm_id":"SR3_4","display":"SR 3.4","title":"Software and information integrity"},{"norm_id":"SR3_5","display":"SR 3.5","title":"Input validation"},{"norm_id":"SR3_6","display":"SR 3.6","title":"Deterministic output"},{"norm_id":"SR3_7","display":"SR 3.7","title":"Error handling"},{"norm_id":"SR3_8","display":"SR 3.8","title":"Session integrity"},{"norm_id":"SR3_9","display":"SR 3.9","title":"Protection of audit information"},{"norm_id":"SR4_1","display":"SR 4.1","title":"Information confidentiality"},{"norm_id":"SR4_2","display":"SR 4.2","title":"Information persistence"},{"norm_id":"SR4_3","display":"SR 4.3","title":"Use of cryptography"},{"norm_id":"SR5_1","display":"SR 5.1","title":"Network segmentation"},{"norm_id":"SR5_2","display":"SR 5.2","title":"Zone boundary protection"},{"norm_id":"SR5_3","display":"SR 5.3","title":"General purpose person-to-person communication restrictions"},{"norm_id":"SR5_4","display":"SR 5.4","title":"Application partitioning"},{"norm_id":"SR6_1","display":"SR 6.1","title":"Audit log accessibility"},{"norm_id":"SR6_2","display":"SR 6.2","title":"Continuous monitoring"},{"norm_id":"SR7_1","display":"SR 7.1","title":"Denial of service protection"},{"norm_id":"SR7_2","display":"SR 7.2","title":"Resource management"},{"norm_id":"SR7_3","display":"SR 7.3","title":"Control system backup"},{"norm_id":"SR7_4","display":"SR 7.4","title":"Control system recovery and reconstitution"},{"norm_id":"SR7_5","display":"SR 7.5","title":"Emergency power"},{"norm_id":"SR7_6","display":"SR 7.6","title":"Network and security configuration settings"},{"norm_id":"SR7_7","display":"SR 7.7","title":"Least functionality"},{"norm_id":"SR7_8","display":"SR 7.8","title":"Control system component inventory"}],"ISO62443_4_2":[{"norm_id":"CR1_1","display":"CR 1.1","title":"Human user identification and authentication"},{"norm_id":"CR1_2","display":"CR 1.2","title":"Software process and device identification and authentication"},{"norm_id":"CR1_3","display":"CR 1.3","title":"Account management"},{"norm_id":"CR1_4","display":"CR 1.4","title":"Identifier management"},{"norm_id":"CR1_5","display":"CR 1.5","title":"Authenticator management"},{"norm_id":"CR1_6","display":"CR 1.6","title":"Wireless access management"},{"norm_id":"CR1_7","display":"CR 1.7","title":"Strength of password-based authentication"},{"norm_id":"CR1_8","display":"CR 1.8","title":"Public key infrastructure certificates"},{"norm_id":"CR1_9","display":"CR 1.9","title":"Strength of public key-based authentication"},{"norm_id":"CR1_10","display":"CR 1.10","title":"Authenticator feedback"},{"norm_id":"CR1_11","display":"CR 1.11","title":"Unsuccessful login attempts"},{"norm_id":"CR1_12","display":"CR 1.12","title":"System use notification"},{"norm_id":"CR1_13","display":"CR 1.13","title":"Access via untrusted networks"},{"norm_id":"CR1_14","display":"CR 1.14","title":"Strength of symmetric key-based authentication"},{"norm_id":"CR2_1","display":"CR 2.1","title":"Authorization enforcement"},{"norm_id":"CR2_2","display":"CR 2.2","title":"Wireless use control"},{"norm_id":"CR2_3","display":"CR 2.3","title":"Use control for portable and mobile devices"},{"norm_id":"CR2_4","display":"CR 2.4","title":"Mobile code"},{"norm_id":"CR2_5","display":"CR 2.5","title":"Session lock"},{"norm_id":"CR2_6","display":"CR 2.6","title":"Remote session termination"},{"norm_id":"CR2_7","display":"CR 2.7","title":"Concurrent session control"},{"norm_id":"CR2_8","display":"CR 2.8","title":"Auditable events"},{"norm_id":"CR2_9","display":"CR 2.9","title":"Audit storage capacity"},{"norm_id":"CR2_10","display":"CR 2.10","title":"Response to audit processing failures"},{"norm_id":"CR2_11","display":"CR 2.11","title":"Timestamps"},{"norm_id":"CR2_12","display":"CR 2.12","title":"Non-repudiation"},{"norm_id":"CR2_13","display":"CR 2.13","title":"Use of physical diagnostic and test interfaces"},{"norm_id":"CR3_1","display":"CR 3.1","title":"Communication integrity"},{"norm_id":"CR3_2","display":"CR 3.2","title":"Protection from malicious code"},{"norm_id":"CR3_3","display":"CR 3.3","title":"Security functionality verification"},{"norm_id":"CR3_4","display":"CR 3.4","title":"Software and information integrity"},{"norm_id":"CR3_5","display":"CR 3.5","title":"Input validation"},{"norm_id":"CR3_6","display":"CR 3.6","title":"Deterministic output"},{"norm_id":"CR3_7","display":"CR 3.7","title":"Error handling"},{"norm_id":"CR3_8","display":"CR 3.8","title":"Session integrity"},{"norm_id":"CR3_9","display":"CR 3.9","title":"Protection of audit information"},{"norm_id":"CR3_10","display":"CR 3.10","title":"Support for updates"},{"norm_id":"CR3_11","display":"CR 3.11","title":"Physical tamper resistance and detection"},{"norm_id":"CR3_12","display":"CR 3.12","title":"Provisioning product supplier roots of trust"},{"norm_id":"CR3_13","display":"CR 3.13","title":"Provisioning asset owner roots of trust"},{"norm_id":"CR3_14","display":"CR 3.14","title":"Integrity of the boot process"},{"norm_id":"CR4_1","display":"CR 4.1","title":"Information confidentiality"},{"norm_id":"CR4_2","display":"CR 4.2","title":"Information persistence"},{"norm_id":"CR4_3","display":"CR 4.3","title":"Use of cryptography"},{"norm_id":"CR5_1","display":"CR 5.1","title":"Network segmentation"},{"norm_id":"CR5_2","display":"CR 5.2","title":"Zone boundary protection"},{"norm_id":"CR5_3","display":"CR 5.3","title":"General-purpose person-to-person communication restrictions"},{"norm_id":"CR5_4","display":"CR 5.4","title":"Application partitioning"},{"norm_id":"CR6_1","display":"CR 6.1","title":"Audit log accessibility"},{"norm_id":"CR6_2","display":"CR 6.2","title":"Continuous monitoring"},{"norm_id":"CR7_1","display":"CR 7.1","title":"Denial of service protection"},{"norm_id":"CR7_2","display":"CR 7.2","title":"Resource management"},{"norm_id":"CR7_3","display":"CR 7.3","title":"Control system backup"},{"norm_id":"CR7_4","display":"CR 7.4","title":"Control system recovery and reconstitution"},{"norm_id":"CR7_5","display":"CR 7.5","title":"Emergency power"},{"norm_id":"CR7_6","display":"CR 7.6","title":"Network and security configuration settings"},{"norm_id":"CR7_7","display":"CR 7.7","title":"Least functionality"},{"norm_id":"CR7_8","display":"CR 7.8","title":"Control system component inventory"},{"norm_id":"SAR2_4","display":"SAR 2.4","title":"Mobile code"},{"norm_id":"SAR3_2","display":"SAR 3.2","title":"Protection from malicious code"},{"norm_id":"EDR2_4","display":"EDR 2.4","title":"Mobile code"},{"norm_id":"EDR2_13","display":"EDR 2.13","title":"Use of physical diagnostic and test interfaces"},{"norm_id":"EDR3_2","display":"EDR 3.2","title":"Protection from malicious code"},{"norm_id":"EDR3_10","display":"EDR 3.10","title":"Support for updates"},{"norm_id":"EDR3_11","display":"EDR 3.11","title":"Physical tamper resistance and detection"},{"norm_id":"EDR3_12","display":"EDR 3.12","title":"Provisioning product supplier roots of trust"},{"norm_id":"EDR3_13","display":"EDR 3.13","title":"Provisioning asset owner roots of trust"},{"norm_id":"EDR3_14","display":"EDR 3.14","title":"Integrity of the boot process"},{"norm_id":"HDR2_4","display":"HDR 2.4","title":"Mobile code"},{"norm_id":"HDR2_13","display":"HDR 2.13","title":"Use of physical diagnostic and test interfaces"},{"norm_id":"HDR3_2","display":"HDR 3.2","title":"Protection from malicious code"},{"norm_id":"HDR3_10","display":"HDR 3.10","title":"Support for updates"},{"norm_id":"HDR3_11","display":"HDR 3.11","title":"Physical tamper resistance and detection"},{"norm_id":"HDR3_12","display":"HDR 3.12","title":"Provisioning product supplier roots of trust"},{"norm_id":"HDR3_13","display":"HDR 3.13","title":"Provisioning asset owner roots of trust"},{"norm_id":"HDR3_14","display":"HDR 3.14","title":"Integrity of the boot process"},{"norm_id":"NDR1_6","display":"NDR 1.6","title":"Wireless access management"},{"norm_id":"NDR1_13","display":"NDR 1.13","title":"Access via untrusted networks"},{"norm_id":"NDR2_4","display":"NDR 2.4","title":"Mobile code"},{"norm_id":"NDR2_13","display":"NDR 2.13","title":"Use of physical diagnostic and test interfaces"},{"norm_id":"NDR3_2","display":"NDR 3.2","title":"Protection from malicious code"},{"norm_id":"NDR3_10","display":"NDR 3.10","title":"Support for updates"},{"norm_id":"NDR3_11","display":"NDR 3.11","title":"Physical tamper resistance and detection"},{"norm_id":"NDR3_12","display":"NDR 3.12","title":"Provisioning product supplier roots of trust"},{"norm_id":"NDR3_13","display":"NDR 3.13","title":"Provisioning asset owner roots of trust"},{"norm_id":"NDR3_14","display":"NDR 3.14","title":"Integrity of the boot process"},{"norm_id":"NDR5_2","display":"NDR 5.2","title":"Zone boundary protection"},{"norm_id":"NDR5_3","display":"NDR 5.3","title":"General purpose, person-to-person communication restrictions"}],"ISO62443_4_1":[{"norm_id":"SM_1","display":"SM-1","title":"Development process"},{"norm_id":"SM_2","display":"SM-2","title":"Identification of responsibilities"},{"norm_id":"SM_3","display":"SM-3","title":"Identification of applicability"},{"norm_id":"SM_4","display":"SM-4","title":"Security expertise"},{"norm_id":"SM_5","display":"SM-5","title":"Process scoping"},{"norm_id":"SM_6","display":"SM-6","title":"File integrity"},{"norm_id":"SM_7","display":"SM-7","title":"Development environment security"},{"norm_id":"SM_8","display":"SM-8","title":"Controls for private keys"},{"norm_id":"SM_9","display":"SM-9","title":"Security requirements for externally provided components"},{"norm_id":"SM_10","display":"SM-10","title":"Custom developed components from third-party suppliers"},{"norm_id":"SM_11","display":"SM-11","title":"Assessing and addressing security-related issues"},{"norm_id":"SM_12","display":"SM-12","title":"Process verification"},{"norm_id":"SM_13","display":"SM-13","title":"Continuous improvement"},{"norm_id":"SR_1","display":"SR-1","title":"Product security context"},{"norm_id":"SR_2","display":"SR-2","title":"Threat model"},{"norm_id":"SR_3","display":"SR-3","title":"Product security requirements"},{"norm_id":"SR_4","display":"SR-4","title":"Product security requirements content"},{"norm_id":"SR_5","display":"SR-5","title":"Security requirements review"},{"norm_id":"SD_1","display":"SD-1","title":"Secure design principles"},{"norm_id":"SD_2","display":"SD-2","title":"Defense in depth design"},{"norm_id":"SD_3","display":"SD-3","title":"Security design review"},{"norm_id":"SD_4","display":"SD-4","title":"Secure design best practices"},{"norm_id":"SI_1","display":"SI-1","title":"Security implementation review"},{"norm_id":"SI_2","display":"SI-2","title":"Secure coding standards"},{"norm_id":"SVV_1","display":"SVV-1","title":"Security requirements testing"},{"norm_id":"SVV_2","display":"SVV-2","title":"Threat mitigation testing"},{"norm_id":"SVV_3","display":"SVV-3","title":"Vulnerability testing"},{"norm_id":"SVV_4","display":"SVV-4","title":"Penetration testing"},{"norm_id":"SVV_5","display":"SVV-5","title":"Independence of testers"},{"norm_id":"DM_1","display":"DM-1","title":"Receiving notifications of security-related issues"},{"norm_id":"DM_2","display":"DM-2","title":"Reviewing security-related issues"},{"norm_id":"DM_3","display":"DM-3","title":"Assessing security-related issues"},{"norm_id":"DM_4","display":"DM-4","title":"Addressing security-related issues"},{"norm_id":"DM_5","display":"DM-5","title":"Disclosing security-related issues"},{"norm_id":"DM_6","display":"DM-6","title":"Periodic review of security defect management practice"},{"norm_id":"SUM_1","display":"SUM-1","title":"Security update qualification"},{"norm_id":"SUM_2","display":"SUM-2","title":"Security update documentation"},{"norm_id":"SUM_3","display":"SUM-3","title":"Dependent component or operating system security update documentation"},{"norm_id":"SUM_4","display":"SUM-4","title":"Security update delivery"},{"norm_id":"SUM_5","display":"SUM-5","title":"Timely delivery of security patches"},{"norm_id":"SG_1","display":"SG-1","title":"Product defense in depth"},{"norm_id":"SG_2","display":"SG-2","title":"Defense in depth measures expected in the environment"},{"norm_id":"SG_3","display":"SG-3","title":"Security hardening guidelines"},{"norm_id":"SG_4","display":"SG-4","title":"Secure disposal guidelines"},{"norm_id":"SG_5","display":"SG-5","title":"Secure operation guidelines"},{"norm_id":"SG_6","display":"SG-6","title":"Account management guidelines"},{"norm_id":"SG_7","display":"SG-7","title":"Documentation review"}]};
+  var NORMS = [{"key":"ISO62443_2_1","label":"IEC 62443-2-1","desc":"Security-Programm Anforderungen für Asset Owner","hasRegister":false},{"key":"ISO62443_3_3","label":"IEC 62443-3-3","desc":"System-Security Anforderungen und Security-Levels (SR)","hasRegister":true},{"key":"ISO62443_4_1","label":"IEC 62443-4-1","desc":"Secure-Product-Development-Lifecycle Anforderungen (Practices)","hasRegister":true},{"key":"ISO62443_4_2","label":"IEC 62443-4-2","desc":"Technical-Security Anforderungen für Komponenten (CR/EDR/HDR/NDR/SAR)","hasRegister":true},{"key":"EN40000_1","label":"EN 40000-1","desc":"","hasRegister":false},{"key":"EN40000_2","label":"EN 40000-2","desc":"","hasRegister":false},{"key":"EN40000_3","label":"EN 40000-3","desc":"","hasRegister":false},{"key":"CRA","label":"Cyber Resilience Act","desc":"","hasRegister":false},{"key":"EN50742","label":"EN 50742","desc":"","hasRegister":false}];
+
+  // ---------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------
+  var state = {
+    mode: 'build',
+    sonderfall: 'none',
+    normKey: 'ISO62443_3_3',
+    segMode: 'control',
+    controlSearch: '',
+    controlId: '',
+    freeNormstelle: '',
+    kapitelInput: '',
+    locP: '', locS: '', locLit: '', locNr: '',
+    collision: '',
+    decodeInput: 'ISO62443_3_3_SR3_3__P2_S1',
+  };
+
+  var firstControl = (REGISTER['ISO62443_3_3'] || [])[0];
+  state.controlId = firstControl ? firstControl.norm_id : '';
+
+  // ---------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------
+  function normalizeToken(raw) {
+    if (!raw) return '';
+    var s = raw.trim().replace(/[.\-\s]+/g, '_').replace(/[^A-Za-z0-9_]/g, '');
+    s = s.replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+    return s;
+  }
+
+  function normalizeChapter(raw) {
+    if (!raw) return '';
+    var parts = raw.trim().split(/[.\-_\s]+/).filter(Boolean);
+    if (!parts.length) return '';
+    return 'K' + parts.join('_');
+  }
+
+  function buildLocatorSegment(s) {
+    var parts = [];
+    if (s.locP) parts.push('P' + normalizeToken(s.locP));
+    if (s.locS) parts.push('S' + normalizeToken(s.locS));
+    if (s.locLit) parts.push('Lit' + normalizeToken(s.locLit));
+    if (s.locNr) parts.push('Nr' + normalizeToken(s.locNr));
+    return parts.length ? '__' + parts.join('_') : '';
+  }
+
+  function computeBuild() {
+    var s = state;
+    var messages = [];
+    var id = '';
+    var selectedControlTitle = '';
+    var selectedControlDisplay = '';
+
+    if (s.sonderfall === 'todo' || s.sonderfall === 'wissen') {
+      id = s.sonderfall === 'todo' ? 'TODO_NEU' : 'INTERNES_WISSEN';
+      if (s.collision) id += '_N' + normalizeToken(s.collision);
+    } else {
+      var register = REGISTER[s.normKey] || [];
+      var hasRegister = register.length > 0;
+      var segment = '';
+      if (s.segMode === 'kapitel') {
+        segment = normalizeChapter(s.kapitelInput);
+        if (!segment) messages.push('Bitte eine Kapitel-Nummer eintragen (z. B. 5.3).');
+      } else {
+        if (hasRegister) {
+          segment = s.controlId || '';
+          var found = register.find(function (c) { return c.norm_id === s.controlId; });
+          if (found) { selectedControlTitle = found.title; selectedControlDisplay = found.display; }
+        } else {
+          segment = normalizeToken(s.freeNormstelle);
+          if (!segment) messages.push('Bitte eine Normstelle eintragen (z. B. SR3.3).');
+        }
+      }
+      var locatorSegment = buildLocatorSegment(s);
+      var collisionSegment = s.collision ? '_N' + normalizeToken(s.collision) : '';
+      id = segment ? (s.normKey + '_' + segment + locatorSegment + collisionSegment) : '';
+    }
+
+    if (id) {
+      if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(id)) {
+        messages.push('Der Name enthält ungültige Zeichen oder beginnt nicht mit einem Buchstaben.');
+      }
+      if (id.length > 40) {
+        messages.push('Name ist ' + id.length + ' Zeichen lang — Word-Textmarken sind auf 40 Zeichen begrenzt.');
+      }
+    }
+
+    return { id: id, messages: messages, selectedControlTitle: selectedControlTitle, selectedControlDisplay: selectedControlDisplay };
+  }
+
+  function parseDecode() {
+    var s = state;
+    var raw = (s.decodeInput || '').trim();
+    if (!raw) return { error: '', sentence: '', rows: [] };
+
+    var todoMatch = raw.match(/^(TODO_NEU|INTERNES_WISSEN)(?:_N(\d+))?$/);
+    if (todoMatch) {
+      var base = todoMatch[1];
+      var n = todoMatch[2];
+      var rows = [{ k: 'Typ', v: base }];
+      if (n) rows.push({ k: 'Kollision', v: n + '. Vergabe dieses Namens' });
+      var sentence = base === 'TODO_NEU'
+        ? 'Kein passendes Control vorhanden — Textstelle muss im Register geklärt werden.'
+        : 'Textstelle basiert auf internem Wissen, ohne direkten Normbezug.';
+      return { error: '', sentence: sentence + (n ? ' (' + n + '. Vergabe dieses Namens)' : ''), rows: rows };
+    }
+
+    if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(raw)) {
+      return { error: 'Enthält ungültige Zeichen oder beginnt nicht mit einem Buchstaben — kein gültiger Word-Textmarken-Name.', sentence: '', rows: [] };
+    }
+
+    var rest = raw;
+    var collisionN = '';
+    var collMatch = rest.match(/_N(\d+)$/);
+    if (collMatch) { collisionN = collMatch[1]; rest = rest.slice(0, -collMatch[0].length); }
+
+    var locatorPart = '';
+    var locIdx = rest.indexOf('__');
+    var normAndSegment = rest;
+    if (locIdx !== -1) {
+      normAndSegment = rest.slice(0, locIdx);
+      locatorPart = rest.slice(locIdx + 2);
+    }
+
+    var norms = (NORMS || []).slice().sort(function (a, b) { return b.key.length - a.key.length; });
+    var matchedNorm = null;
+    for (var i = 0; i < norms.length; i++) {
+      var nrm = norms[i];
+      if (normAndSegment === nrm.key || normAndSegment.indexOf(nrm.key + '_') === 0) { matchedNorm = nrm; break; }
+    }
+    if (!matchedNorm) {
+      return { error: 'Kein bekanntes Normkürzel am Anfang erkannt.', sentence: '', rows: [] };
+    }
+    var segment = normAndSegment.slice(matchedNorm.key.length + 1);
+    if (!segment) {
+      return { error: 'Nach dem Normkürzel fehlt die Normstelle.', sentence: '', rows: [] };
+    }
+
+    var rowsOut = [{ k: 'Norm', v: matchedNorm.label + (matchedNorm.desc ? ' — ' + matchedNorm.desc : '') }];
+    var segmentSentence = '';
+    if (/^K\d/.test(segment)) {
+      var chapterDisplay = segment.slice(1).replace(/_/g, '.');
+      segmentSentence = 'Kapitel ' + chapterDisplay;
+      rowsOut.push({ k: 'Kapitel', v: chapterDisplay });
+    } else {
+      var register = (REGISTER[matchedNorm.key] || []);
+      var found2 = register.find(function (c) { return c.norm_id === segment; });
+      if (found2) {
+        segmentSentence = found2.display + ' – „' + found2.title + '“';
+        rowsOut.push({ k: 'Control', v: found2.display });
+        rowsOut.push({ k: 'Titel', v: found2.title });
+      } else {
+        segmentSentence = segment;
+        rowsOut.push({ k: 'Control', v: segment + ' (nicht im Register gefunden)' });
+      }
+    }
+
+    var locatorLabels = [];
+    if (locatorPart) {
+      var tokens = locatorPart.split('_');
+      for (var j = 0; j < tokens.length; j++) {
+        var t = tokens[j];
+        var m;
+        if ((m = t.match(/^P(\d+)$/))) locatorLabels.push('Absatz ' + m[1]);
+        else if ((m = t.match(/^S(\d+)$/))) locatorLabels.push('Satz ' + m[1]);
+        else if ((m = t.match(/^Lit([A-Za-z0-9]+)$/))) locatorLabels.push('Buchstabe ' + m[1]);
+        else if ((m = t.match(/^Nr(\d+)$/))) locatorLabels.push('Nummer ' + m[1]);
+        else locatorLabels.push(t + ' (unbekannt)');
+      }
+      rowsOut.push({ k: 'Locator', v: locatorLabels.join(', ') });
+    }
+    if (collisionN) rowsOut.push({ k: 'Kollision', v: collisionN + '. Vergabe dieses Namens' });
+
+    var sentence = matchedNorm.label + ', ' + segmentSentence;
+    if (locatorLabels.length) sentence += ', ' + locatorLabels.join(', ');
+    if (collisionN) sentence += ' (' + collisionN + '. Vergabe dieses Namens)';
+
+    return { error: '', sentence: sentence, rows: rowsOut };
+  }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).catch(function () {
+        return fallbackCopy(text);
+      });
+    }
+    return fallbackCopy(text);
+  }
+
+  function fallbackCopy(text) {
+    return new Promise(function (resolve, reject) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.top = '-1000px';
+        ta.style.left = '-1000px';
+        ta.setAttribute('readonly', '');
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (ok) resolve(); else reject(new Error('execCommand copy failed'));
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // DOM refs
+  // ---------------------------------------------------------------------
+  var el = {
+    tabBuild: document.getElementById('tabBuild'),
+    tabDecode: document.getElementById('tabDecode'),
+    buildPanel: document.getElementById('buildPanel'),
+    decodePanel: document.getElementById('decodePanel'),
+
+    sonderfallHint: document.getElementById('sonderfallHint'),
+    standardCaseSection: document.getElementById('standardCaseSection'),
+
+    normSelect: document.getElementById('normSelect'),
+    currentNormDesc: document.getElementById('currentNormDesc'),
+
+    segControlBtn: document.getElementById('segControlBtn'),
+    segKapitelBtn: document.getElementById('segKapitelBtn'),
+    segControlSection: document.getElementById('segControlSection'),
+    segKapitelSection: document.getElementById('segKapitelSection'),
+    hasRegisterSection: document.getElementById('hasRegisterSection'),
+    noRegisterSection: document.getElementById('noRegisterSection'),
+
+    controlSearch: document.getElementById('controlSearch'),
+    controlSelect: document.getElementById('controlSelect'),
+    noControlResults: document.getElementById('noControlResults'),
+    freeNormstelle: document.getElementById('freeNormstelle'),
+    kapitelInput: document.getElementById('kapitelInput'),
+
+    locP: document.getElementById('locP'),
+    locS: document.getElementById('locS'),
+    locLit: document.getElementById('locLit'),
+    locNr: document.getElementById('locNr'),
+    collision: document.getElementById('collision'),
+
+    generatedId: document.getElementById('generatedId'),
+    copyBtn: document.getElementById('copyBtn'),
+    testInDecoderBtn: document.getElementById('testInDecoderBtn'),
+    validationBox: document.getElementById('validationBox'),
+    validationMessages: document.getElementById('validationMessages'),
+    controlInfoBox: document.getElementById('controlInfoBox'),
+    controlInfoDisplay: document.getElementById('controlInfoDisplay'),
+    controlInfoTitle: document.getElementById('controlInfoTitle'),
+
+    decodeInput: document.getElementById('decodeInput'),
+    exampleRow: document.getElementById('exampleRow'),
+    decodeErrorBox: document.getElementById('decodeErrorBox'),
+    decodeErrorText: document.getElementById('decodeErrorText'),
+    decodeSentenceBox: document.getElementById('decodeSentenceBox'),
+    decodeSentenceText: document.getElementById('decodeSentenceText'),
+    decodeRowsBox: document.getElementById('decodeRowsBox'),
+  };
+
+  var sonderfallBtns = Array.prototype.slice.call(document.querySelectorAll('.pill-btn[data-sonderfall]'));
+  var copyResetTimer = null;
+
+  // ---------------------------------------------------------------------
+  // Static option population (norms)
+  // ---------------------------------------------------------------------
+  NORMS.forEach(function (n) {
+    var opt = document.createElement('option');
+    opt.value = n.key;
+    opt.textContent = n.label + (n.extra ? ' (Zusatz)' : '') + (n.hasRegister ? '' : ' — kein Register');
+    el.normSelect.appendChild(opt);
+  });
+
+  var examples = [
+    { label: 'ISO62443_3_3_SR3_3__P2_S1', value: 'ISO62443_3_3_SR3_3__P2_S1' },
+    { label: 'ISO62443_4_2_CR1_1', value: 'ISO62443_4_2_CR1_1' },
+    { label: 'CRA_Art11_1__Litb', value: 'CRA_Art11_1__Litb' },
+    { label: 'EN40000_1_K5_3__S2', value: 'EN40000_1_K5_3__S2' },
+    { label: 'TODO_NEU', value: 'TODO_NEU' },
+  ];
+  examples.forEach(function (ex) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'example-btn';
+    btn.textContent = ex.label;
+    btn.addEventListener('click', function () {
+      state.decodeInput = ex.value;
+      el.decodeInput.value = ex.value;
+      render();
+    });
+    el.exampleRow.appendChild(btn);
+  });
+
+  // ---------------------------------------------------------------------
+  // Event wiring
+  // ---------------------------------------------------------------------
+  el.tabBuild.addEventListener('click', function () { state.mode = 'build'; render(); });
+  el.tabDecode.addEventListener('click', function () { state.mode = 'decode'; render(); });
+
+  sonderfallBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      state.sonderfall = btn.getAttribute('data-sonderfall');
+      render();
+    });
+  });
+
+  el.normSelect.addEventListener('change', function (e) {
+    var key = e.target.value;
+    var reg = REGISTER[key] || [];
+    state.normKey = key;
+    state.controlId = reg[0] ? reg[0].norm_id : '';
+    state.controlSearch = '';
+    state.freeNormstelle = '';
+    render();
+  });
+
+  el.segControlBtn.addEventListener('click', function () { state.segMode = 'control'; render(); });
+  el.segKapitelBtn.addEventListener('click', function () { state.segMode = 'kapitel'; render(); });
+
+  el.controlSearch.addEventListener('input', function (e) { state.controlSearch = e.target.value; render(); });
+  el.controlSelect.addEventListener('change', function (e) { state.controlId = e.target.value; render(); });
+  el.freeNormstelle.addEventListener('input', function (e) { state.freeNormstelle = e.target.value; render(); });
+  el.kapitelInput.addEventListener('input', function (e) { state.kapitelInput = e.target.value; render(); });
+
+  el.locP.addEventListener('input', function (e) { state.locP = e.target.value; render(); });
+  el.locS.addEventListener('input', function (e) { state.locS = e.target.value; render(); });
+  el.locLit.addEventListener('input', function (e) { state.locLit = e.target.value; render(); });
+  el.locNr.addEventListener('input', function (e) { state.locNr = e.target.value; render(); });
+  el.collision.addEventListener('input', function (e) { state.collision = e.target.value; render(); });
+
+  el.copyBtn.addEventListener('click', function () {
+    var build = computeBuild();
+    if (!build.id) return;
+    copyToClipboard(build.id).then(function () {
+      setCopyLabel('Kopiert!');
+    }).catch(function () {
+      setCopyLabel('Kopieren fehlgeschlagen');
+    });
+  });
+
+  function setCopyLabel(label) {
+    el.copyBtn.textContent = label;
+    if (copyResetTimer) clearTimeout(copyResetTimer);
+    copyResetTimer = setTimeout(function () {
+      el.copyBtn.textContent = 'ID kopieren';
+    }, 1400);
+  }
+
+  el.testInDecoderBtn.addEventListener('click', function () {
+    var build = computeBuild();
+    state.mode = 'decode';
+    state.decodeInput = build.id;
+    render();
+  });
+
+  el.decodeInput.addEventListener('input', function (e) {
+    state.decodeInput = e.target.value;
+    render();
+  });
+
+  // ---------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------
+  function render() {
+    var isBuildMode = state.mode === 'build';
+    el.tabBuild.classList.toggle('active', isBuildMode);
+    el.tabDecode.classList.toggle('active', !isBuildMode);
+    el.buildPanel.style.display = isBuildMode ? '' : 'none';
+    el.decodePanel.style.display = isBuildMode ? 'none' : '';
+
+    if (isBuildMode) renderBuild();
+    else renderDecode();
+  }
+
+  function renderBuild() {
+    var s = state;
+    var isStandardCase = s.sonderfall === 'none';
+
+    sonderfallBtns.forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-sonderfall') === s.sonderfall);
+    });
+    var sonderfallHintText = s.sonderfall === 'todo'
+      ? 'Für Textstellen ohne passendes Control im Register — keine ID erfinden.'
+      : (s.sonderfall === 'wissen' ? 'Für Textstellen ohne jeden Normbezug.' : '');
+    if (sonderfallHintText) {
+      el.sonderfallHint.textContent = sonderfallHintText;
+      el.sonderfallHint.style.display = '';
+    } else {
+      el.sonderfallHint.style.display = 'none';
+    }
+
+    el.standardCaseSection.style.display = isStandardCase ? '' : 'none';
+
+    if (isStandardCase) {
+      if (el.normSelect.value !== s.normKey) el.normSelect.value = s.normKey;
+
+      var currentNorm = NORMS.find(function (n) { return n.key === s.normKey; });
+      if (currentNorm && currentNorm.desc) {
+        el.currentNormDesc.textContent = currentNorm.desc;
+        el.currentNormDesc.style.display = '';
+      } else {
+        el.currentNormDesc.style.display = 'none';
+      }
+
+      var hasRegister = !!(currentNorm && currentNorm.hasRegister);
+      var isSegControl = s.segMode === 'control';
+      el.segControlBtn.classList.toggle('active', isSegControl);
+      el.segKapitelBtn.classList.toggle('active', !isSegControl);
+      el.segControlSection.style.display = isSegControl ? '' : 'none';
+      el.segKapitelSection.style.display = !isSegControl ? '' : 'none';
+
+      if (isSegControl) {
+        el.hasRegisterSection.style.display = hasRegister ? '' : 'none';
+        el.noRegisterSection.style.display = hasRegister ? 'none' : '';
+
+        if (hasRegister) {
+          if (el.controlSearch.value !== s.controlSearch) el.controlSearch.value = s.controlSearch;
+
+          var register = REGISTER[s.normKey] || [];
+          var filter = (s.controlSearch || '').toLowerCase();
+          var controlOptions = register.filter(function (c) {
+            return !filter || c.display.toLowerCase().indexOf(filter) !== -1 || c.title.toLowerCase().indexOf(filter) !== -1;
+          });
+
+          el.controlSelect.innerHTML = '';
+          controlOptions.forEach(function (c) {
+            var opt = document.createElement('option');
+            opt.value = c.norm_id;
+            opt.textContent = c.display + ' — ' + c.title;
+            if (c.norm_id === s.controlId) opt.selected = true;
+            el.controlSelect.appendChild(opt);
+          });
+          el.noControlResults.style.display = controlOptions.length === 0 ? '' : 'none';
+        } else {
+          if (el.freeNormstelle.value !== s.freeNormstelle) el.freeNormstelle.value = s.freeNormstelle;
+        }
+      } else {
+        if (el.kapitelInput.value !== s.kapitelInput) el.kapitelInput.value = s.kapitelInput;
+      }
+
+      if (el.locP.value !== s.locP) el.locP.value = s.locP;
+      if (el.locS.value !== s.locS) el.locS.value = s.locS;
+      if (el.locLit.value !== s.locLit) el.locLit.value = s.locLit;
+      if (el.locNr.value !== s.locNr) el.locNr.value = s.locNr;
+    }
+
+    if (el.collision.value !== s.collision) el.collision.value = s.collision;
+
+    var build = computeBuild();
+    el.generatedId.textContent = build.id || '—';
+
+    if (build.messages.length) {
+      el.validationMessages.innerHTML = '';
+      build.messages.forEach(function (msg) {
+        var div = document.createElement('div');
+        div.className = 'notice-line';
+        div.textContent = '· ' + msg;
+        el.validationMessages.appendChild(div);
+      });
+      el.validationBox.style.display = '';
+    } else {
+      el.validationBox.style.display = 'none';
+    }
+
+    if (build.selectedControlTitle) {
+      el.controlInfoDisplay.textContent = build.selectedControlDisplay;
+      el.controlInfoTitle.textContent = build.selectedControlTitle;
+      el.controlInfoBox.style.display = '';
+    } else {
+      el.controlInfoBox.style.display = 'none';
+    }
+  }
+
+  function renderDecode() {
+    if (el.decodeInput.value !== state.decodeInput) el.decodeInput.value = state.decodeInput;
+
+    var decode = parseDecode();
+
+    if (decode.error) {
+      el.decodeErrorText.textContent = decode.error;
+      el.decodeErrorBox.style.display = '';
+    } else {
+      el.decodeErrorBox.style.display = 'none';
+    }
+
+    if (decode.sentence) {
+      el.decodeSentenceText.textContent = decode.sentence;
+      el.decodeSentenceBox.style.display = '';
+    } else {
+      el.decodeSentenceBox.style.display = 'none';
+    }
+
+    if (decode.rows.length) {
+      el.decodeRowsBox.innerHTML = '';
+      decode.rows.forEach(function (row) {
+        var item = document.createElement('div');
+        item.className = 'row-item';
+        var k = document.createElement('div');
+        k.className = 'row-key';
+        k.textContent = row.k;
+        var v = document.createElement('div');
+        v.className = 'row-val';
+        v.textContent = row.v;
+        item.appendChild(k);
+        item.appendChild(v);
+        el.decodeRowsBox.appendChild(item);
+      });
+      el.decodeRowsBox.style.display = '';
+    } else {
+      el.decodeRowsBox.style.display = 'none';
+    }
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
