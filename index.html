@@ -983,6 +983,13 @@ Ziffer        ::= "0".."9"
     });
   });
 
+  function resetLocatorFields() {
+    state.locP = '';
+    state.locS = '';
+    state.locLit = '';
+    state.locNr = '';
+  }
+
   el.normSelect.addEventListener('change', function (e) {
     var key = e.target.value;
     var reg = REGISTER[key] || [];
@@ -990,6 +997,8 @@ Ziffer        ::= "0".."9"
     state.controlId = reg[0] ? reg[0].norm_id : '';
     state.controlSearch = '';
     state.freeNormstelle = '';
+    state.kapitelInput = '';
+    resetLocatorFields();
     render();
   });
 
@@ -997,7 +1006,11 @@ Ziffer        ::= "0".."9"
   el.segKapitelBtn.addEventListener('click', function () { state.segMode = 'kapitel'; render(); });
 
   el.controlSearch.addEventListener('input', function (e) { state.controlSearch = e.target.value; render(); });
-  el.controlSelect.addEventListener('change', function (e) { state.controlId = e.target.value; render(); });
+  el.controlSelect.addEventListener('change', function (e) {
+    state.controlId = e.target.value;
+    resetLocatorFields();
+    render();
+  });
   el.freeNormstelle.addEventListener('input', function (e) { state.freeNormstelle = e.target.value; render(); });
   el.kapitelInput.addEventListener('input', function (e) { state.kapitelInput = e.target.value; render(); });
 
