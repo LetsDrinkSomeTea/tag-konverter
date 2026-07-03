@@ -11,7 +11,7 @@ Und das Ganze wiederholt sich: Mit 4-2, 2-4 und 3-3 stehen bereits die nächsten
 
 ## Die Lösung
 
-Jede relevante Textstelle bekommt eine **Word-Textmarke**, die eindeutig auf ein **Control in einem zentralen Register** verweist — z. B. `ISO62443_3_3_SR3_3__P2_S1` für Absatz 2, Satz 1 von SR 3.3. Damit ist für jede Stelle sofort klar: welches Control, aus welcher Norm, an welcher genauen Position.
+Jede relevante Textstelle bekommt eine **Word-Textmarke**, die eindeutig auf ein **Control in einem zentralen Register** verweist — z. B. `IEC62443_3_3_SR3_3__P2_S1` für Absatz 2, Satz 1 von SR 3.3. Damit ist für jede Stelle sofort klar: welches Control, aus welcher Norm, an welcher genauen Position.
 
 Aus den Tags kann programmatisch eine Matrix erstellt werden, die die Dokumente den Controls zuweist.
 Das Register wird zur Suchbasis: Statt 30 Dokumente zu durchsuchen, filtert man das Register nach Norm oder Control und sieht sofort alle betroffenen Stellen — auch bei der nächsten Normrevision.
