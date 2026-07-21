@@ -118,7 +118,6 @@ jobs:
           pandoc README.md -s \
             --css=style.css \
             --include-before-body=nav.html \
-            --metadata title="Dinge einfach wiederfinden" \
             -V pagetitle="Dinge einfach wiederfinden" \
             -o _site/README.html
           # Pandoc kapselt den Seiteninhalt nicht automatisch in einen Container;
@@ -128,7 +127,6 @@ jobs:
           pandoc Syntax-Leitfaden.md -s \
             --css=style.css \
             --include-before-body=nav.html \
-            --metadata title="Tag-Syntax für Control-Mapping" \
             -V pagetitle="Tag-Syntax für Control-Mapping" \
             -o _site/Syntax-Leitfaden.html
           sed -i 's/<body>/<body><div class="doc">/; s/<\/body>/<\/div><\/body>/' _site/Syntax-Leitfaden.html
