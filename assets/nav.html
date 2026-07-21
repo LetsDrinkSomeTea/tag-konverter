@@ -1,0 +1,15 @@
+<nav class="site-nav">
+  <a href="index.html">Tool</a>
+  <a href="README.html">Hintergrund</a>
+  <a href="Syntax-Leitfaden.html">Syntax-Leitfaden</a>
+</nav>
+<script>
+  (function () {
+    var file = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    var links = document.querySelectorAll('.site-nav a');
+    for (var i = 0; i < links.length; i++) {
+      var href = (links[i].getAttribute('href') || '').toLowerCase();
+      if (href === file) links[i].classList.add('active');
+    }
+  })();
+</script>

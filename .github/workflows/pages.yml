@@ -32,92 +32,12 @@ jobs:
           # Tool wird unverändert an der Wurzel gehostet.
           cp index.html _site/index.html
 
-          cat > _site/style.css <<'CSS'
-          * { box-sizing: border-box; }
-          html, body {
-            margin: 0;
-            padding: 0;
-            background: #f5f4f0;
-            color: #1c1c1a;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-          }
-          body {
-            padding: clamp(20px, 5vw, 40px) clamp(16px, 4vw, 24px) clamp(48px, 8vw, 80px);
-          }
-          .doc {
-            max-width: 760px;
-            margin: 0 auto;
-            line-height: 1.6;
-          }
-          code {
-            background: #eae7de;
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-family: ui-monospace, Menlo, Consolas, monospace;
-            font-size: 13px;
-          }
-          pre {
-            background: #eae7de;
-            border: 1px solid #e2e0d6;
-            border-radius: 8px;
-            padding: 14px 16px;
-            overflow-x: auto;
-          }
-          pre code { background: none; padding: 0; }
-          h1, h2, h3 {
-            font-weight: 650;
-            letter-spacing: -0.01em;
-            color: #1c1c1a;
-          }
-          h1 { font-size: 30px; }
-          h2 { font-size: 20px; margin-top: 2em; }
-          a { color: #1c2b24; }
-          table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 1em 0;
-            font-size: 14px;
-          }
-          th, td {
-            border: 1px solid #e2e0d6;
-            padding: 8px 12px;
-            text-align: left;
-          }
-          th { background: #eef1e9; }
-          .site-nav {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin: 0 auto 28px;
-            max-width: 760px;
-            background: #e9e7e0;
-            padding: 4px;
-            border-radius: 10px;
-            width: fit-content;
-          }
-          .site-nav a {
-            display: inline-block;
-            padding: 10px 20px;
-            border-radius: 7px;
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-            color: #6b6f63;
-          }
-          .site-nav a:hover { color: #1c1c1a; }
-          CSS
-
-          cat > nav.html <<'NAV'
-          <nav class="site-nav">
-            <a href="index.html">Tool</a>
-            <a href="README.html">Hintergrund</a>
-            <a href="Syntax-Leitfaden.html">Syntax-Leitfaden</a>
-          </nav>
-          NAV
+          # Gemeinsames Stylesheet (CI-Tokens, identisch mit dem Inline-CSS im Tool).
+          cp assets/site.css _site/style.css
 
           pandoc README.md -s \
             --css=style.css \
-            --include-before-body=nav.html \
+            --include-before-body=assets/nav.html \
             -V pagetitle="Dinge einfach wiederfinden" \
             -o _site/README.html
           # Pandoc kapselt den Seiteninhalt nicht automatisch in einen Container;
@@ -126,7 +46,7 @@ jobs:
 
           pandoc Syntax-Leitfaden.md -s \
             --css=style.css \
-            --include-before-body=nav.html \
+            --include-before-body=assets/nav.html \
             -V pagetitle="Tag-Syntax für Control-Mapping" \
             -o _site/Syntax-Leitfaden.html
           sed -i 's/<body>/<body><div class="doc">/; s/<\/body>/<\/div><\/body>/' _site/Syntax-Leitfaden.html
