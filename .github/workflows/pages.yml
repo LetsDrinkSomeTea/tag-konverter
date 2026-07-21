@@ -1,0 +1,153 @@
+name: Deploy Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pandoc
+        run: sudo apt-get update && sudo apt-get install -y pandoc
+
+      - name: Build site
+        run: |
+          set -e
+          mkdir -p _site
+
+          # Tool wird unverändert an der Wurzel gehostet.
+          cp index.html _site/index.html
+
+          cat > _site/style.css <<'CSS'
+          * { box-sizing: border-box; }
+          html, body {
+            margin: 0;
+            padding: 0;
+            background: #f5f4f0;
+            color: #1c1c1a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+          }
+          body {
+            padding: clamp(20px, 5vw, 40px) clamp(16px, 4vw, 24px) clamp(48px, 8vw, 80px);
+          }
+          .doc {
+            max-width: 760px;
+            margin: 0 auto;
+            line-height: 1.6;
+          }
+          code {
+            background: #eae7de;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-family: ui-monospace, Menlo, Consolas, monospace;
+            font-size: 13px;
+          }
+          pre {
+            background: #eae7de;
+            border: 1px solid #e2e0d6;
+            border-radius: 8px;
+            padding: 14px 16px;
+            overflow-x: auto;
+          }
+          pre code { background: none; padding: 0; }
+          h1, h2, h3 {
+            font-weight: 650;
+            letter-spacing: -0.01em;
+            color: #1c1c1a;
+          }
+          h1 { font-size: 30px; }
+          h2 { font-size: 20px; margin-top: 2em; }
+          a { color: #1c2b24; }
+          table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+            font-size: 14px;
+          }
+          th, td {
+            border: 1px solid #e2e0d6;
+            padding: 8px 12px;
+            text-align: left;
+          }
+          th { background: #eef1e9; }
+          .site-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin: 0 auto 28px;
+            max-width: 760px;
+            background: #e9e7e0;
+            padding: 4px;
+            border-radius: 10px;
+            width: fit-content;
+          }
+          .site-nav a {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 7px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            color: #6b6f63;
+          }
+          .site-nav a:hover { color: #1c1c1a; }
+          CSS
+
+          cat > nav.html <<'NAV'
+          <nav class="site-nav">
+            <a href="index.html">Tool</a>
+            <a href="README.html">Hintergrund</a>
+            <a href="Syntax-Leitfaden.html">Syntax-Leitfaden</a>
+          </nav>
+          NAV
+
+          pandoc README.md -s \
+            --css=style.css \
+            --include-before-body=nav.html \
+            --metadata title="Dinge einfach wiederfinden" \
+            -V pagetitle="Dinge einfach wiederfinden" \
+            -o _site/README.html
+          # Pandoc kapselt den Seiteninhalt nicht automatisch in einen Container;
+          # .doc sorgt hier für dieselbe max-width wie beim Tool.
+          sed -i 's/<body>/<body><div class="doc">/; s/<\/body>/<\/div><\/body>/' _site/README.html
+
+          pandoc Syntax-Leitfaden.md -s \
+            --css=style.css \
+            --include-before-body=nav.html \
+            --metadata title="Tag-Syntax für Control-Mapping" \
+            -V pagetitle="Tag-Syntax für Control-Mapping" \
+            -o _site/Syntax-Leitfaden.html
+          sed -i 's/<body>/<body><div class="doc">/; s/<\/body>/<\/div><\/body>/' _site/Syntax-Leitfaden.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
