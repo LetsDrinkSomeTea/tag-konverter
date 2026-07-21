@@ -68,6 +68,33 @@
     max-width: 680px;
     margin: 0;
   }
+  .header-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .header-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border-radius: 9px;
+    border: 1px solid #d9d6c9;
+    background: #ffffff;
+    color: #1c2b24;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .header-link:hover {
+    border-color: #1c2b24;
+    background: #eef4ef;
+  }
+  .header-link .icon {
+    font-size: 15px;
+  }
 
   .tabs {
     display: flex;
@@ -472,9 +499,9 @@
       <div class="eyebrow">Control-Mapping · Word-Textmarken</div>
       <h1>Tag-Syntax Konverter</h1>
       <p class="lede">Erzeugt und entschlüsselt Word-Textmarken nach der Syntax <code>&lt;Normkürzel&gt;_&lt;Normstelle&gt;[__&lt;Locator&gt;][_N&lt;n&gt;]</code>.</p>
-      <div style="margin-top:14px; display:flex; gap:16px; font-size:12.5px;">
-        <a href="README.html" style="color:#5b6b63;">Hintergrund &amp; Motivation</a>
-        <a href="Syntax-Leitfaden.html" style="color:#5b6b63;">Syntax-Leitfaden</a>
+      <div class="header-links">
+        <a class="header-link" href="README.html"><span class="icon">💡</span> Wozu das Ganze? (Hintergrund)</a>
+        <a class="header-link" href="Syntax-Leitfaden.html"><span class="icon">📖</span> Syntax-Leitfaden nachlesen</a>
       </div>
     </div>
 
