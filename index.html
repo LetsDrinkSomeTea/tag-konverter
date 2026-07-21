@@ -486,6 +486,132 @@
     white-space: pre;
   }
 
+  /* --- Geführter Schritt-Aufbau (Redesign) --- */
+  .step {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 14px;
+    padding: 22px 0;
+    border-top: 1px solid #eeece3;
+  }
+  .step:first-child { border-top: none; padding-top: 2px; }
+  .step > div { min-width: 0; }
+  .step-num {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #1c2b24;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+  .step-title {
+    font-size: 15.5px;
+    font-weight: 650;
+    color: #1c1c1a;
+    letter-spacing: -0.01em;
+    margin-bottom: 3px;
+  }
+  .step-sub {
+    font-size: 12.5px;
+    color: #6b6f63;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .optional-tag {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b6f63;
+    background: #eef1e9;
+    border-radius: 20px;
+    padding: 2px 9px;
+    vertical-align: middle;
+  }
+  .term-note { color: #a4a798; font-weight: 400; }
+
+  .extra-field {
+    padding: 20px 0 2px 44px;
+    border-top: 1px solid #eeece3;
+  }
+
+  .meaning-box {
+    background: #eef4ef;
+    border: 1px solid #cfe0d6;
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .meaning-label {
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #5b7367;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .meaning-text {
+    font-size: 14.5px;
+    color: #1f3128;
+    line-height: 1.5;
+  }
+
+  .word-hint {
+    background: #ffffff;
+    border: 1px solid #e2e0d6;
+    border-radius: 12px;
+    padding: 14px 18px;
+  }
+  .word-hint-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #43473f;
+    margin-bottom: 9px;
+  }
+  .word-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 7px;
+    font-size: 12.5px;
+    color: #43473f;
+  }
+  .word-steps .wc {
+    background: #f5f4f0;
+    border: 1px solid #e2e0d6;
+    border-radius: 6px;
+    padding: 4px 9px;
+    white-space: nowrap;
+  }
+  .word-steps .arrow { color: #b3b6a8; }
+
+  details.sonderfall {
+    margin-top: 8px;
+    border-top: 1px solid #eeece3;
+    padding-top: 16px;
+  }
+  details.sonderfall > summary,
+  details.grammar > summary {
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #5b6b63;
+    list-style: none;
+  }
+  details.sonderfall > summary::-webkit-details-marker,
+  details.grammar > summary::-webkit-details-marker { display: none; }
+  details.sonderfall > summary::before,
+  details.grammar > summary::before { content: '▸ '; color: #9a9d90; }
+  details.sonderfall[open] > summary::before,
+  details.grammar[open] > summary::before { content: '▾ '; }
+  details.sonderfall .sf-body { margin-top: 14px; }
+  details.grammar { margin-top: 20px; }
+  details.grammar .sf-body { margin-top: 14px; }
+
   .copy-toast {
     animation: copyPulse 1.4s ease;
   }
@@ -498,7 +624,7 @@
     <div id="pageHeader" style="margin-bottom:0;">
       <div class="eyebrow">Control-Mapping · Word-Textmarken</div>
       <h1>Tag-Syntax Konverter</h1>
-      <p class="lede">Erzeugt und entschlüsselt Word-Textmarken nach der Syntax <code>&lt;Normkürzel&gt;_&lt;Normstelle&gt;[__&lt;Locator&gt;][_N&lt;n&gt;]</code>.</p>
+      <p class="lede">Baut eindeutige Namen für Word-Textmarken nach der Control-Mapping-Syntax. Du wählst Norm und Stelle, das Tool setzt den korrekten Namen zusammen und zeigt live, was er im Klartext bedeutet.</p>
       <div class="header-links">
         <a class="header-link" href="README.html"><span class="icon">💡</span> Wozu das Ganze? (Hintergrund)</a>
         <a class="header-link" href="Syntax-Leitfaden.html"><span class="icon">📖</span> Syntax-Leitfaden nachlesen</a>
@@ -506,8 +632,8 @@
     </div>
 
     <div class="tabs">
-      <button type="button" id="tabBuild" class="tab-btn active">Text → ID bauen</button>
-      <button type="button" id="tabDecode" class="tab-btn">ID → Text entschlüsseln</button>
+      <button type="button" id="tabBuild" class="tab-btn active">Namen erstellen</button>
+      <button type="button" id="tabDecode" class="tab-btn">Namen verstehen</button>
     </div>
 
     <div id="buildPanel">
@@ -515,105 +641,127 @@
 
         <div class="card">
 
-          <div style="margin-bottom:22px;">
-            <div class="field-label">Sonderfall</div>
-            <div class="pill-row">
-              <button type="button" class="pill-btn active" data-sonderfall="none">Standard</button>
-              <button type="button" class="pill-btn" data-sonderfall="todo">TODO_NEU</button>
-              <button type="button" class="pill-btn" data-sonderfall="wissen">INTERNES_WISSEN</button>
-            </div>
-            <div id="sonderfallHint" class="hint" style="display:none;"></div>
-          </div>
-
           <div id="standardCaseSection">
-            <div class="divider"></div>
 
-            <div style="margin-bottom:20px;">
-              <label class="field-label" for="normSelect">Normkürzel</label>
-              <select id="normSelect" class="select-input"></select>
-              <div id="currentNormDesc" class="hint" style="display:none;"></div>
-            </div>
-
-            <div style="margin-bottom:20px;">
-              <label class="field-label">Normstelle</label>
-              <div class="seg-row">
-                <button type="button" id="segControlBtn" class="seg-btn active">Control</button>
-                <button type="button" id="segKapitelBtn" class="seg-btn">Kapitel (kein Control)</button>
-              </div>
-
-              <div id="segControlSection">
-                <div id="hasRegisterSection">
-                  <input type="text" id="controlSearch" class="text-input" placeholder="Suche nach ID oder Titel…" style="margin-bottom:8px;"/>
-                  <select id="controlSelect" class="control-select" size="8"></select>
-                  <div id="noControlResults" class="no-results" style="display:none;">Keine Treffer.</div>
-                </div>
-                <div id="noRegisterSection" style="display:none;">
-                  <input type="text" id="freeNormstelle" class="text-input" placeholder="z. B. SR3.3, PR-1, Art11.1"/>
-                  <div class="hint">Für dieses Normkürzel liegt kein Control-Register vor — Punkte/Bindestriche werden automatisch zu Unterstrichen.</div>
-                </div>
-              </div>
-
-              <div id="segKapitelSection" style="display:none;">
-                <input type="text" id="kapitelInput" class="text-input" placeholder="z. B. 5.3"/>
-                <div class="hint">Ergibt z. B. „K5_3“ für Kapitel 5.3 — genutzt, wenn kein formales Control existiert.</div>
+            <div class="step">
+              <div class="step-num">1</div>
+              <div>
+                <div class="step-title">Aus welcher Norm stammt die Stelle?</div>
+                <div class="step-sub">Das Regelwerk, auf das sich die markierte Textstelle bezieht.</div>
+                <select id="normSelect" class="select-input"></select>
+                <div id="currentNormDesc" class="hint" style="display:none;"></div>
               </div>
             </div>
 
-            <div class="divider"></div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div>
+                <div class="step-title">Welche Stelle in der Norm?</div>
+                <div class="step-sub">Eine konkrete Anforderung aus dem Register — oder, wenn es dafür keine gibt, nur die Kapitelnummer.</div>
+                <div class="seg-row">
+                  <button type="button" id="segControlBtn" class="seg-btn active">Bestimmte Anforderung</button>
+                  <button type="button" id="segKapitelBtn" class="seg-btn">Nur ein Kapitel</button>
+                </div>
 
-            <div style="margin-bottom:4px;">
-              <label class="field-label" style="margin-bottom:12px;">Locator (optional): Absatz · Satz · Buchstabe · Nummer</label>
-              <div class="locator-grid">
-                <div>
-                  <label class="sub-label">Absatz (P&lt;n&gt;)</label>
-                  <input type="text" inputmode="numeric" id="locP" class="text-input small" placeholder="2"/>
+                <div id="segControlSection">
+                  <div id="hasRegisterSection">
+                    <input type="text" id="controlSearch" class="text-input" placeholder="Nach Nummer oder Titel suchen…" style="margin-bottom:8px;"/>
+                    <select id="controlSelect" class="control-select" size="8"></select>
+                    <div id="noControlResults" class="no-results" style="display:none;">Keine Treffer.</div>
+                  </div>
+                  <div id="noRegisterSection" style="display:none;">
+                    <input type="text" id="freeNormstelle" class="text-input" placeholder="z. B. SR3.3, PR-1, Art11.1"/>
+                    <div class="hint">Für diese Norm liegt kein Register vor — tippe die Fundstelle so ein, wie sie in der Norm steht. Punkte und Bindestriche passt das Tool automatisch an.</div>
+                  </div>
                 </div>
-                <div>
-                  <label class="sub-label">Satz (S&lt;n&gt;)</label>
-                  <input type="text" inputmode="numeric" id="locS" class="text-input small" placeholder="1"/>
-                </div>
-                <div>
-                  <label class="sub-label">Buchstabe (Lit&lt;x&gt;)</label>
-                  <input type="text" id="locLit" class="text-input small" placeholder="b"/>
-                </div>
-                <div>
-                  <label class="sub-label">Nummer (Nr&lt;n&gt;)</label>
-                  <input type="text" inputmode="numeric" id="locNr" class="text-input small" placeholder="3"/>
+
+                <div id="segKapitelSection" style="display:none;">
+                  <input type="text" id="kapitelInput" class="text-input" placeholder="z. B. 5.3"/>
+                  <div class="hint">Für Stellen ohne formale Anforderung — Kapitel 5.3 wird z. B. zu „K5_3“.</div>
                 </div>
               </div>
             </div>
+
+            <div class="step">
+              <div class="step-num">3</div>
+              <div>
+                <div class="step-title">Genauer eingrenzen?<span class="optional-tag">optional</span></div>
+                <div class="step-sub">Nur nötig, wenn du auf eine bestimmte Stelle <em>innerhalb</em> der Anforderung zeigen willst. Leer lassen = ganze Anforderung gemeint.</div>
+                <div class="locator-grid">
+                  <div>
+                    <label class="sub-label">Absatz <span class="term-note">P</span></label>
+                    <input type="text" inputmode="numeric" id="locP" class="text-input small" placeholder="z. B. 2"/>
+                  </div>
+                  <div>
+                    <label class="sub-label">Satz <span class="term-note">S</span></label>
+                    <input type="text" inputmode="numeric" id="locS" class="text-input small" placeholder="z. B. 1"/>
+                  </div>
+                  <div>
+                    <label class="sub-label">Buchstabe <span class="term-note">Lit</span></label>
+                    <input type="text" id="locLit" class="text-input small" placeholder="z. B. b"/>
+                  </div>
+                  <div>
+                    <label class="sub-label">Nummer <span class="term-note">Nr</span></label>
+                    <input type="text" inputmode="numeric" id="locNr" class="text-input small" placeholder="z. B. 3"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <div class="divider"></div>
-
-          <div>
-            <label class="field-label">Namenskollision (optional)</label>
+          <div class="extra-field">
+            <div class="step-title">Gleichen Namen schon vergeben?<span class="optional-tag">optional</span></div>
+            <div class="step-sub">Word verlangt eindeutige Namen. Brauchst du denselben Namen ein weiteres Mal, zähle ihn hoch — das ergibt _N2, _N3 …</div>
             <div class="collision-row">
-              <span>Wievielte Vergabe dieses Namens?</span>
+              <span>Wievielte Vergabe?</span>
               <input type="text" inputmode="numeric" id="collision" class="text-input small collision-input" placeholder="z. B. 2"/>
             </div>
           </div>
+
+          <details class="sonderfall">
+            <summary>Sonderfall: keine passende Anforderung?</summary>
+            <div class="sf-body">
+              <div class="pill-row">
+                <button type="button" class="pill-btn active" data-sonderfall="none">Normale Stelle</button>
+                <button type="button" class="pill-btn" data-sonderfall="todo">Anforderung fehlt noch</button>
+                <button type="button" class="pill-btn" data-sonderfall="wissen">Eigenes Wissen</button>
+              </div>
+              <div id="sonderfallHint" class="hint" style="display:none;"></div>
+            </div>
+          </details>
 
         </div>
 
         <div class="sidebar">
           <div class="result-box">
-            <div class="result-label">Generierte Textmarke</div>
+            <div class="result-label">Dein fertiger Name</div>
             <div class="result-value" id="generatedId">—</div>
             <div class="result-actions">
-              <button type="button" class="copy-btn" id="copyBtn">ID kopieren</button>
-              <button type="button" class="test-btn" id="testInDecoderBtn">Im Decoder prüfen</button>
+              <button type="button" class="copy-btn" id="copyBtn">📋 Namen kopieren</button>
+              <button type="button" class="test-btn" id="testInDecoderBtn">Im Detail ansehen</button>
             </div>
           </div>
 
+          <div id="buildMeaningBox" class="meaning-box" style="display:none;">
+            <div class="meaning-label">Das bedeutet</div>
+            <div class="meaning-text" id="buildMeaningText"></div>
+          </div>
+
           <div id="validationBox" class="notice-box" style="display:none;">
-            <div class="notice-title">Hinweise</div>
+            <div class="notice-title">Bitte noch prüfen</div>
             <div id="validationMessages"></div>
           </div>
 
-          <div id="controlInfoBox" class="info-box" style="display:none;">
-            <div class="info-title" id="controlInfoDisplay"></div>
-            <div class="info-body" id="controlInfoTitle"></div>
+          <div class="word-hint">
+            <div class="word-hint-title">So kommt der Name in Word an die Stelle</div>
+            <div class="word-steps">
+              <span class="wc">Text markieren</span><span class="arrow">→</span>
+              <span class="wc">Einfügen</span><span class="arrow">→</span>
+              <span class="wc">Textmarke</span><span class="arrow">→</span>
+              <span class="wc">Name einfügen</span><span class="arrow">→</span>
+              <span class="wc">Hinzufügen</span>
+            </div>
           </div>
         </div>
       </div>
@@ -622,9 +770,11 @@
     <div id="decodePanel" style="display:none;">
       <div class="grid-2">
         <div class="card">
-          <label class="field-label" for="decodeInput" style="margin-bottom:10px;">Textmarken-Name eingeben</label>
+          <label class="field-label" for="decodeInput" style="margin-bottom:4px;">Textmarken-Name</label>
+          <div class="step-sub" style="margin-bottom:12px;">Füge einen bestehenden Namen ein — das Tool übersetzt ihn zurück in Klartext.</div>
           <input type="text" id="decodeInput" class="text-input" style="padding:13px 14px; font-size:15px; font-family:ui-monospace,Menlo,Consolas,monospace;" placeholder="z. B. IEC62443_3_3_SR3_3__P2_S1" value="IEC62443_3_3_SR3_3__P2_S1"/>
 
+          <div class="sub-label" style="margin-top:16px;">Oder ein Beispiel anklicken:</div>
           <div class="example-row" id="exampleRow"></div>
         </div>
 
@@ -635,7 +785,7 @@
           </div>
 
           <div id="decodeSentenceBox" class="sentence-box" style="display:none;">
-            <div class="sentence-label">Klartext</div>
+            <div class="sentence-label">Im Klartext</div>
             <div class="sentence-body" id="decodeSentenceText"></div>
           </div>
 
@@ -645,25 +795,31 @@
     </div>
 
     <details class="cheatsheet">
-      <summary>Syntax-Spickzettel</summary>
+      <summary>Bausteine erklärt</summary>
       <div class="cheat-grid">
         <div>
-          <div class="h">Normkürzel</div>
-          IEC62443_2_1, IEC62443_3_3, IEC62443_4_1, IEC62443_4_2, EN40000_1/_2/_3, CRA, EN50742
-          <div class="h2">Locator (Absatz → Satz → Buchstabe → Nummer)</div>
-          P&lt;n&gt; Absatz · S&lt;n&gt; Satz · Lit&lt;x&gt; Buchstabe · Nr&lt;n&gt; Nummer
+          <div class="h">Aufbau eines Namens</div>
+          <code>Norm _ Stelle __ Locator _N&lt;n&gt;</code><br/>
+          Beispiel <code>IEC62443_3_3_SR3_3__P2_S1</code> =<br/>
+          IEC 62443-3-3, Anforderung SR 3.3, Absatz 2, Satz 1.
+          <div class="h2">Anforderung (Control)</div>
+          Eine einzelne, nummerierte Anforderung aus dem Register der Norm — z. B. SR 3.3, CR 1.1, PRE-1. Du wählst sie in Schritt 2 aus einer durchsuchbaren Liste; die korrekte Kurz-ID setzt das Tool selbst ein.
         </div>
         <div>
-          <div class="h">Sonderfälle</div>
-          Kein Control passt, aber Klärung nötig: <code>TODO_NEU</code><br/>
-          Kein Normbezug, eigenes Wissen: <code>INTERNES_WISSEN</code><br/>
-          Namenskollision beim zweiten Vorkommen: <code>_N2</code>, <code>_N3</code>, …
-          <div class="h2">Regeln</div>
-          Nur Buchstaben, Ziffern, Unterstriche · muss mit Buchstabe beginnen · Word-Limit 40 Zeichen
+          <div class="h">Locator: von grob nach fein</div>
+          Absatz → Satz → Buchstabe → Nummer. Immer nur so fein wie nötig; leer = ganze Anforderung.
+          <div class="h2">Sonderfälle</div>
+          Noch keine passende Anforderung: <code>TODO_NEU</code><br/>
+          Ohne Normbezug, eigenes Wissen: <code>INTERNES_WISSEN</code><br/>
+          Zweite Vergabe desselben Namens: <code>_N2</code>, <code>_N3</code>, …
+          <div class="h2">Regeln von Word</div>
+          Nur Buchstaben, Ziffern, Unterstriche · muss mit Buchstabe beginnen · max. 40 Zeichen. Das Tool hält sie automatisch ein.
         </div>
       </div>
-      <div class="grammar-box">
-        <div class="grammar-title">Formale Grammatik (EBNF)</div>
+      <details class="grammar">
+        <summary>Für Technische: formale Grammatik (EBNF)</summary>
+        <div class="sf-body">
+      <div class="grammar-box" style="margin-top:0;">
         <pre class="grammar-pre">Textmarke     ::= Standardform | Sonderfall
 Standardform  ::= Normkuerzel "_" Normstelle [ "__" Locator ] [ Kollision ]
 Sonderfall    ::= ( "TODO_NEU" | "INTERNES_WISSEN" ) [ Kollision ]
@@ -689,6 +845,8 @@ Ziffer        ::= "0".."9"
 (* Word-Textmarken-Regel: Gesamtname muss mit Buchstabe beginnen,
    nur [A-Za-z0-9_], maximal 40 Zeichen. *)</pre>
       </div>
+        </div>
+      </details>
     </details>
 
   </div>
@@ -768,7 +926,7 @@ Ziffer        ::= "0".."9"
       var segment = '';
       if (s.segMode === 'kapitel') {
         segment = normalizeChapter(s.kapitelInput);
-        if (!segment) messages.push('Bitte eine Kapitel-Nummer eintragen (z. B. 5.3).');
+        if (!segment) messages.push('Trag noch die Kapitel-Nummer ein (z. B. 5.3).');
       } else {
         if (hasRegister) {
           segment = s.controlId || '';
@@ -776,7 +934,7 @@ Ziffer        ::= "0".."9"
           if (found) { selectedControlTitle = found.title; selectedControlDisplay = found.display; }
         } else {
           segment = normalizeToken(s.freeNormstelle);
-          if (!segment) messages.push('Bitte eine Normstelle eintragen (z. B. SR3.3).');
+          if (!segment) messages.push('Trag noch die Fundstelle ein (z. B. SR3.3).');
         }
       }
       var locatorSegment = buildLocatorSegment(s);
@@ -796,9 +954,8 @@ Ziffer        ::= "0".."9"
     return { id: id, messages: messages, selectedControlTitle: selectedControlTitle, selectedControlDisplay: selectedControlDisplay };
   }
 
-  function parseDecode() {
-    var s = state;
-    var raw = (s.decodeInput || '').trim();
+  function describe(rawInput) {
+    var raw = (rawInput || '').trim();
     if (!raw) return { error: '', sentence: '', rows: [] };
 
     var todoMatch = raw.match(/^(TODO_NEU|INTERNES_WISSEN)(?:_N(\d+))?$/);
@@ -808,8 +965,8 @@ Ziffer        ::= "0".."9"
       var rows = [{ k: 'Typ', v: base }];
       if (n) rows.push({ k: 'Kollision', v: n + '. Vergabe dieses Namens' });
       var sentence = base === 'TODO_NEU'
-        ? 'Kein passendes Control vorhanden — Textstelle muss im Register geklärt werden.'
-        : 'Textstelle basiert auf internem Wissen, ohne direkten Normbezug.';
+        ? 'Noch keine passende Anforderung vorhanden — diese Stelle wird später im Register geklärt.'
+        : 'Beruht auf eigenem Wissen, ohne direkten Normbezug.';
       return { error: '', sentence: sentence + (n ? ' (' + n + '. Vergabe dieses Namens)' : ''), rows: rows };
     }
 
@@ -855,11 +1012,11 @@ Ziffer        ::= "0".."9"
       var found2 = register.find(function (c) { return c.norm_id === segment; });
       if (found2) {
         segmentSentence = found2.display + ' – „' + found2.title + '“';
-        rowsOut.push({ k: 'Control', v: found2.display });
+        rowsOut.push({ k: 'Anforderung', v: found2.display });
         rowsOut.push({ k: 'Titel', v: found2.title });
       } else {
         segmentSentence = segment;
-        rowsOut.push({ k: 'Control', v: segment + ' (nicht im Register gefunden)' });
+        rowsOut.push({ k: 'Anforderung', v: segment + ' (nicht im Register gefunden)' });
       }
     }
 
@@ -955,9 +1112,8 @@ Ziffer        ::= "0".."9"
     testInDecoderBtn: document.getElementById('testInDecoderBtn'),
     validationBox: document.getElementById('validationBox'),
     validationMessages: document.getElementById('validationMessages'),
-    controlInfoBox: document.getElementById('controlInfoBox'),
-    controlInfoDisplay: document.getElementById('controlInfoDisplay'),
-    controlInfoTitle: document.getElementById('controlInfoTitle'),
+    buildMeaningBox: document.getElementById('buildMeaningBox'),
+    buildMeaningText: document.getElementById('buildMeaningText'),
 
     decodeInput: document.getElementById('decodeInput'),
     exampleRow: document.getElementById('exampleRow'),
@@ -1065,7 +1221,7 @@ Ziffer        ::= "0".."9"
     el.copyBtn.textContent = label;
     if (copyResetTimer) clearTimeout(copyResetTimer);
     copyResetTimer = setTimeout(function () {
-      el.copyBtn.textContent = 'ID kopieren';
+      el.copyBtn.textContent = '📋 Namen kopieren';
     }, 1400);
   }
 
@@ -1103,8 +1259,8 @@ Ziffer        ::= "0".."9"
       btn.classList.toggle('active', btn.getAttribute('data-sonderfall') === s.sonderfall);
     });
     var sonderfallHintText = s.sonderfall === 'todo'
-      ? 'Für Textstellen ohne passendes Control im Register — keine ID erfinden.'
-      : (s.sonderfall === 'wissen' ? 'Für Textstellen ohne jeden Normbezug.' : '');
+      ? 'Für Stellen, zu denen (noch) keine passende Anforderung im Register existiert. Erfinde keine ID — der Platzhalter wird später im Register geklärt.'
+      : (s.sonderfall === 'wissen' ? 'Für Stellen, die auf eigenem Wissen beruhen und sich auf keine Norm stützen.' : '');
     if (sonderfallHintText) {
       el.sonderfallHint.textContent = sonderfallHintText;
       el.sonderfallHint.style.display = '';
@@ -1185,19 +1341,19 @@ Ziffer        ::= "0".."9"
       el.validationBox.style.display = 'none';
     }
 
-    if (build.selectedControlTitle) {
-      el.controlInfoDisplay.textContent = build.selectedControlDisplay;
-      el.controlInfoTitle.textContent = build.selectedControlTitle;
-      el.controlInfoBox.style.display = '';
+    var meaning = build.id ? describe(build.id) : { error: '', sentence: '', rows: [] };
+    if (build.id && meaning.sentence && !meaning.error) {
+      el.buildMeaningText.textContent = meaning.sentence;
+      el.buildMeaningBox.style.display = '';
     } else {
-      el.controlInfoBox.style.display = 'none';
+      el.buildMeaningBox.style.display = 'none';
     }
   }
 
   function renderDecode() {
     if (el.decodeInput.value !== state.decodeInput) el.decodeInput.value = state.decodeInput;
 
-    var decode = parseDecode();
+    var decode = describe(state.decodeInput);
 
     if (decode.error) {
       el.decodeErrorText.textContent = decode.error;
