@@ -34,22 +34,38 @@ und müssen mit einem Buchstaben beginnen.
 
 | Kürzel                                  | Norm                 |
 | --------------------------------------- | -------------------- |
-| `ISO62443_2_1`                          | IEC 62443-2-1        |
-| `ISO62443_3_3`                          | IEC 62443-3-3        |
-| `ISO62443_4_1`                          | IEC 62443-4-1        |
-| `ISO62443_4_2`                          | IEC 62443-4-2        |
+| `IEC62443_2_1`                          | IEC 62443-2-1        |
+| `IEC62443_3_3`                          | IEC 62443-3-3        |
+| `IEC62443_4_1`                          | IEC 62443-4-1        |
+| `IEC62443_4_2`                          | IEC 62443-4-2        |
 | `EN40000_1` / `EN40000_2` / `EN40000_3` | EN 40000-1/-2/-3     |
 | `CRA`                                   | Cyber Resilience Act |
 | `EN50742`                               | EN 50742             |
 
 Normstelle danach so nah wie möglich am Normtext, Punkte/Bindestriche werden zu
-`_`: `SR3.3` → `SR3_3`, `PR-1` → `PR_1`, `Art. 11.1` → `Art11_1`.
+`_`: `SR3.3` → `SR3_3`, `PR-1` → `PR_1`, `Art. 11.1` → `Art_11_1`.
 
 ## Kapitel statt Control
 
 Gibt es für eine Stelle kein formales Control, steht anstelle des
 Control-Kürzels einfach eine Kapitel-Angabe: `K<n>[_<n>...]`, z. B. `K5_3` für
 Kapitel 5.3. Locator funktioniert danach genauso weiter.
+
+## Anhang statt Control
+
+Verweist die Stelle auf einen Anhang, steht `Annex_<Buchstabe>` an Stelle des
+Control-Kürzels. Abschnitte im Anhang hängen als Ziffern an, so tief wie der
+Anhang gegliedert ist: `Annex_D_2_1` für D.2.1. Locator funktioniert danach
+genauso weiter.
+
+| Textmarken-Name            | Bedeutung                        |
+| -------------------------- | -------------------------------- |
+| `IEC62443_4_1_Annex_D`     | IEC 62443-4-1, Anhang D komplett |
+| `IEC62443_4_1_Annex_D_2_1` | Anhang D, Abschnitt D.2.1        |
+| `CRA_Annex_I__Lita`        | CRA Anhang I, Buchstabe a        |
+
+Mehrbuchstabige Anhänge (`Annex_ZA`, `Annex_ZZ`) und römische Nummerierungen
+wie beim CRA (`Annex_VIII`) werden genauso geschrieben.
 
 ## Locator
 
@@ -68,15 +84,16 @@ Nur so tief referenzieren, wie nötig. Kein Locator = das ganze Control gemeint.
 
 | Textmarken-Name                | Bedeutung                                          |
 | ------------------------------ | -------------------------------------------------- |
-| `ISO62443_3_3_SR3_3`           | Ganzes Control SR3.3                               |
-| `ISO62443_3_3_SR3_3__P2_S1`    | Nur Absatz 2, Satz 1                               |
-| `ISO62443_3_3_SR3_3__P2_S1_N2` | Gleicher Teil, zweites Vorkommen (Namenskollision) |
-| `CRA_Art11_1__Litb`            | Nur Buchstabe b des CRA-Artikels                   |
+| `IEC62443_3_3_SR3_3`           | Ganzes Control SR3.3                               |
+| `IEC62443_3_3_SR3_3__P2_S1`    | Nur Absatz 2, Satz 1                               |
+| `IEC62443_3_3_SR3_3__P2_S1_N2` | Gleicher Teil, zweites Vorkommen (Namenskollision) |
+| `CRA_Art_11_1__Litb`            | Nur Buchstabe b des CRA-Artikels                   |
+| `IEC62443_4_1_Annex_D_2_1`     | IEC 62443-4-1, Anhang D, Abschnitt D.2.1           |
 | `EN40000_1_K5_3`               | EN 40000-1, Kapitel 5.3, kein Control              |
 | `EN40000_1_K5_3__S2`           | Dieselbe Stelle, nur Satz 2                        |
 
 Ein Satz, der zwei Controls gleichzeitig erfüllt: zwei Textmarken auf derselben
-Auswahl, z. B. `ISO62443_4_1_PR_1` **und** `CRA_Art11_1__Litb`.
+Auswahl, z. B. `IEC62443_4_1_PR_1` **und** `CRA_Art_11_1__Litb`.
 
 ## Sonderfälle
 

@@ -22,7 +22,7 @@ Damit niemand sich die Syntax merken muss, gibt es dafür ein eigenes Werkzeug:
 
 - **Text → ID bauen:** Norm auswählen, Control aus durchsuchbarer Liste wählen (Klartext-Titel inklusive), optional Absatz/Satz/Buchstabe/Nummer angeben — fertig ist eine gültige Textmarke zum Kopieren.
 - **ID → Text entschlüsseln:** Eine bestehende Textmarke eingeben, das Tool übersetzt sie zurück in Klartext — z. B. „IEC 62443-3-3, SR 3.3 – Security functionality verification, Absatz 2, Satz 1".
-- Funktioniert auch für Fälle ohne formales Control (Kapitel-Referenz) oder ganz ohne Normbezug.
+- Funktioniert auch für Fälle ohne formales Control (Kapitel- oder Anhang-Referenz, z. B. `IEC62443_4_1_Annex_D`) oder ganz ohne Normbezug.
 
 Das Register für IEC 62443-3-3, -4-1 und -4-2 ist bereits im Tool hinterlegt — Tippfehler bei Control-IDs sind damit praktisch ausgeschlossen.
 
